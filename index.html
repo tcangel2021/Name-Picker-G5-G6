@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Class Name Picker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --card-bg: rgba(255, 255, 255, 0.92);
+            --primary-blue: #4a90e2;
+            --primary-coral: #ff6b6b;
+            --primary-mint: #2ecc71;
+            --primary-yellow: #f1c40f;
+            --text-dark: #2c3e50;
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.25);
+            --shadow-btn: 0 6px 16px rgba(0, 0, 0, 0.15);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('https://m.media-amazon.com/images/I/8140xB6VrOL.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 16px;
+        }
+
+        /* Screen Wrapper */
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+            text-align: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            animation: fadeIn 0.3s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Titles & Badges */
+        h1 {
+            font-size: 2.5rem;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .badge {
+            background: rgba(238, 242, 243, 0.9);
+            color: var(--text-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+
+        /* Buttons Base */
+        .btn {
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 16px 32px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow-btn);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            min-height: 60px;
+            min-width: 160px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Button Colors */
+        .btn-primary { background-color: var(--primary-blue); color: white; }
+        .btn-grade { background-color: #6c5ce7; color: white; font-size: 1.5rem; width: 100%; max-width: 320px; }
+        .btn-pick { background-color: var(--primary-yellow); color: #333; font-size: 1.8rem; padding: 20px 48px; border-radius: 50px; }
+        .btn-resume { background-color: var(--primary-mint); color: white; }
+        .btn-remove { background-color: var(--primary-coral); color: white; }
+        .btn-home { background-color: #74b9ff; color: white; }
+        .btn-settings { background-color: #a29bfe; color: white; }
+        .btn-secondary { background-color: #b2bec3; color: white; }
+
+        .btn:disabled {
+            background-color: #dfe6e9 !important;
+            color: #b2bec3 !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Home Layout */
+        .grade-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            align-items: center;
+            margin: 20px 0 30px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* Picker Area */
+        .picker-box {
+            width: 100%;
+            min-height: 220px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 4px dashed #a0aec0;
+            border-radius: var(--radius-lg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .name-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            transition: all 0.1s ease;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .name-display.selected {
+            font-size: 4.5rem;
+            color: #6c5ce7;
+            animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            text-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+        }
+
+        @keyframes popBounce {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Control Button Group */
+        .controls-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* Counter Display */
+        .counter {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 10px;
+        }
+
+        /* Modal / Settings */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn 0.25s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 {
+            margin-bottom: 24px;
+            font-size: 2rem;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .toggle-btn {
+            background: #e2e8f0;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 100px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn.on {
+            background: var(--primary-mint);
+            color: white;
+        }
+
+        .speed-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .speed-btn {
+            border: 2px solid #cbd5e1;
+            background: none;
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .speed-btn.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        /* Canvas for Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Responsive Tweaks */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .name-display { font-size: 2.2rem; }
+            .name-display.selected { font-size: 3rem; }
+            .btn { width: 100%; }
+            .controls-group { flex-direction: column; }
+            .speed-options { flex-direction: column; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- HOMEPAGE -->
+    <div id="home-screen" class="screen active">
+        <h1>🎉 Class Name Picker 🎉</h1>
+        <div class="grade-buttons">
+            <button class="btn btn-grade" onclick="selectGrade(5)">👩‍🎓 5th Grade</button>
+            <button class="btn btn-grade" onclick="selectGrade(6)">👨‍🎓 6th Grade</button>
+        </div>
+        <button class="btn btn-settings" onclick="openSettings()">⚙ Settings</button>
+    </div>
+
+    <!-- PICKER SCREEN -->
+    <div id="picker-screen" class="screen">
+        <div class="top-bar">
+            <button class="btn btn-home" onclick="goToHome()" style="min-width: auto; padding: 10px 20px;">🏠 Homepage</button>
+            <div id="grade-badge" class="badge">5th Grade</div>
+            <button class="btn btn-settings" onclick="openSettings()" style="min-width: auto; padding: 10px 20px;">⚙ Settings</button>
+        </div>
+
+        <div class="counter" id="student-counter">Students remaining: 0</div>
+
+        <div class="picker-box">
+            <div id="name-display" class="name-display">Who's next? 🎲</div>
+        </div>
+
+        <button id="pick-btn" class="btn btn-pick" onclick="startPicking()">PICK NAME!</button>
+
+        <div id="action-controls" class="controls-group" style="display: none;">
+            <button class="btn btn-resume" onclick="handleResume()">🔄 Resume</button>
+            <button class="btn btn-remove" onclick="handleRemove()">❌ Remove</button>
+        </div>
+        
+        <button id="start-again-btn" class="btn btn-primary" onclick="resetCurrentClass()" style="display: none; margin-top: 20px;">🎉 Start Again</button>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>⚙ Settings</h2>
+            
+            <div class="setting-row">
+                <span>Sound</span>
+                <button id="sound-toggle" class="toggle-btn on" onclick="toggleSound()">🔊 ON</button>
+            </div>
+
+            <div class="setting-row" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+                <span>Selection Speed</span>
+                <div class="speed-options">
+                    <button class="speed-btn" id="speed-slow" onclick="setSpeed('slow')">🐢 Slow</button>
+                    <button class="speed-btn active" id="speed-normal" onclick="setSpeed('normal')">⚡ Normal</button>
+                    <button class="speed-btn" id="speed-fast" onclick="setSpeed('fast')">🚀 Fast</button>
+                </div>
+            </div>
+
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button id="reset-class-btn" class="btn btn-remove" onclick="confirmResetClass()">↻ Reset Current Class</button>
+                <button class="btn btn-secondary" onclick="closeSettings()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- STUDENT DATA --- */
+        const grade5Students = ["Henry", "Jessica", "Stella", "Levy", "Jess", "Emily", "Lily", "Benjamin", "Jo", "Kevin"];
+        const grade6Students = ["Hans", "Tony", "Peter", "Owen", "Belle", "Sandy", "Stellan", "Selina", "Yuga", "Winnie", "Nina", "Hank"];
+
+        /* --- STATE MANAGEMENT --- */
+        let activePools = {
+            5: [...grade5Students],
+            6: [...grade6Students]
+        };
+
+        let currentGrade = null;
+        let selectedStudent = null;
+        let isAnimating = false;
+        let soundEnabled = true;
+        let selectionSpeed = 'normal'; // 'slow', 'normal', 'fast'
+
+        /* --- AUDIO SYNTHESIS (Web Audio API) --- */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTickSound() {
+            if (!soundEnabled) return;
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400 + Math.random() * 200, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch(e){}
+        }
+
+        function playWinSound() {
+            if (!soundEnabled) return;
+            initAudio();
+            try {
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.08);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + index * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + index * 0.08 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + index * 0.08);
+                    osc.stop(audioCtx.currentTime + index * 0.08 + 0.3);
+                });
+            } catch(e){}
+        }
+
+        /* --- SCREEN ROUTING --- */
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function selectGrade(grade) {
+            initAudio();
+            currentGrade = grade;
+            document.getElementById('grade-badge').textContent = `${grade}th Grade`;
+            updateUIState();
+            showScreen('picker-screen');
+        }
+
+        function goToHome() {
+            if (isAnimating) return;
+            showScreen('home-screen');
+        }
+
+        /* --- PICKER LOGIC --- */
+        function updateUIState() {
+            const pool = activePools[currentGrade];
+            const counter = document.getElementById('student-counter');
+            const nameDisplay = document.getElementById('name-display');
+            const pickBtn = document.getElementById('pick-btn');
+            const actionControls = document.getElementById('action-controls');
+            const startAgainBtn = document.getElementById('start-again-btn');
+
+            counter.textContent = `Students remaining: ${pool.length}`;
+
+            if (selectedStudent) {
+                nameDisplay.textContent = `✨ ${selectedStudent} ✨`;
+                nameDisplay.classList.add('selected');
+                pickBtn.style.display = 'none';
+                actionControls.style.display = 'flex';
+                startAgainBtn.style.display = 'none';
+            } else {
+                nameDisplay.classList.remove('selected');
+                actionControls.style.display = 'none';
+
+                if (pool.length === 0) {
+                    nameDisplay.textContent = "🎉 Everyone has been picked! 🎉";
+                    pickBtn.style.display = 'none';
+                    startAgainBtn.style.display = 'inline-flex';
+                } else {
+                    nameDisplay.textContent = "Who's next? 🎲";
+                    pickBtn.style.display = 'inline-flex';
+                    pickBtn.disabled = false;
+                    startAgainBtn.style.display = 'none';
+                }
+            }
+        }
+
+        function startPicking() {
+            const pool = activePools[currentGrade];
+            if (pool.length === 0 || isAnimating) return;
+
+            initAudio();
+            isAnimating = true;
+            document.getElementById('pick-btn').disabled = true;
+
+            const nameDisplay = document.getElementById('name-display');
+            nameDisplay.classList.remove('selected');
+
+            // Speed configurations (Interval delays and total steps)
+            const speedConfigs = {
+                slow: { initialDelay: 60, maxDelay: 400, delayStep: 25 },
+                normal: { initialDelay: 40, maxDelay: 300, delayStep: 20 },
+                fast: { initialDelay: 20, maxDelay: 180, delayStep: 15 }
+            };
+
+            const config = speedConfigs[selectionSpeed];
+            let currentDelay = config.initialDelay;
+            let lastIndex = -1;
+
+            function cycle() {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * pool.length);
+                } while (pool.length > 1 && randomIndex === lastIndex);
+                
+                lastIndex = randomIndex;
+                nameDisplay.textContent = pool[randomIndex];
+                playTickSound();
+
+                if (currentDelay < config.maxDelay) {
+                    currentDelay += config.delayStep;
+                    setTimeout(cycle, currentDelay);
+                } else {
+                    // Final Selection
+                    selectedStudent = pool[randomIndex];
+                    isAnimating = false;
+                    updateUIState();
+                    playWinSound();
+                    triggerConfetti();
+                }
+            }
+
+            cycle();
+        }
+
+        function handleResume() {
+            selectedStudent = null;
+            updateUIState();
+        }
+
+        function handleRemove() {
+            if (!selectedStudent) return;
+            const pool = activePools[currentGrade];
+            const index = pool.indexOf(selectedStudent);
+            if (index > -1) {
+                pool.splice(index, 1);
+            }
+            selectedStudent = null;
+            updateUIState();
+        }
+
+        function resetCurrentClass() {
+            activePools[currentGrade] = currentGrade === 5 ? [...grade5Students] : [...grade6Students];
+            selectedStudent = null;
+            updateUIState();
+        }
+
+        /* --- SETTINGS MODAL --- */
+        function openSettings() {
+            const resetBtn = document.getElementById('reset-class-btn');
+            resetBtn.style.display = currentGrade ? 'block' : 'none';
+            document.getElementById('settings-modal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-toggle');
+            btn.textContent = soundEnabled ? '🔊 ON' : '🔇 OFF';
+            btn.classList.toggle('on', soundEnabled);
+        }
+
+        function setSpeed(speed) {
+            selectionSpeed = speed;
+            document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`speed-${speed}`).classList.add('active');
+        }
+
+        function confirmResetClass() {
+            if (!currentGrade) return;
+            if (confirm(`Reset ${currentGrade}th Grade and bring back all students?`)) {
+                resetCurrentClass();
+                closeSettings();
+            }
+        }
+
+        /* --- CONFETTI SYSTEM --- */
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let confettiAnimationId = null;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function triggerConfetti() {
+            particles = [];
+            const colors = ['#ff6b6b', '#4a90e2', '#2ecc71', '#f1c40f', '#a29bfe', '#fd79a8'];
+            const totalParticles = 120;
+
+            // Left side blast
+            for (let i = 0; i < totalParticles / 2; i++) {
+                particles.push({
+                    x: 0,
+                    y: canvas.height * 0.6,
+                    vx: Math.random() * 12 + 4,
+                    vy: Math.random() * -14 - 4,
+                    size: Math.random() * 8 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rSpeed: Math.random() * 10 - 5
+                });
+            }
+
+            // Right side blast
+            for (let i = 0; i < totalParticles / 2; i++) {
+                particles.push({
+                    x: canvas.width,
+                    y: canvas.height * 0.6,
+                    vx: (Math.random() * 12 + 4) * -1,
+                    vy: Math.random() * -14 - 4,
+                    size: Math.random() * 8 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rSpeed: Math.random() * 10 - 5
+                });
+            }
+
+            if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+            const startTime = Date.now();
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.4; // Gravity
+                    p.vx *= 0.98; // Friction
+                    p.rotation += p.rSpeed;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                if (Date.now() - startTime < 3000) {
+                    confettiAnimationId = requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            render();
+        }
+    </script>
+</body>
+</html>
